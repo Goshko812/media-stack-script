@@ -61,7 +61,7 @@ create_media_stack() {
     cd /opt/media-stack
 
     # Download docker-compose.yml
-    wget https://raw.githubusercontent.com/linuxshots/media-stack/main/docker-compose.yml || {
+    wget https://raw.githubusercontent.com/navilg/media-stack/refs/heads/main/docker-compose.yml || {
         echo -e "${RED}Failed to download docker-compose.yml${NC}"
         exit 1
     }
