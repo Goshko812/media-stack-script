@@ -31,7 +31,7 @@ This bash script provides an automated installation and setup for a comprehensiv
 
 1. Download the script:
 ```bash
-wget https://raw.githubusercontent.com/your-username/media-stack/main/setup.sh
+wget https://raw.githubusercontent.com/Goshko812/media-stack-script/refs/heads/main/setup.sh
 ```
 
 2. Make the script executable:
