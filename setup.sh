@@ -66,10 +66,6 @@ create_media_stack() {
         exit 1
     }
 
-    # Create directories for media
-    mkdir -p /opt/media-stack/data/movies
-    mkdir -p /opt/media-stack/data/tvshows
-    mkdir -p /opt/media-stack/downloads/{movies,tvshows}
 }
 
 # Configure VPN (optional)(haven't tried yet so yeah this will probably get removed or some shit later)
@@ -122,6 +118,9 @@ deploy_media_stack() {
         echo -e "${GREEN}Deploying without VPN${NC}"
         docker compose --profile no-vpn up -d
     fi
+
+    docker exec qbittorrent mkdir -p /downloads/movies /downloads/tvshows
+    docker exec qbittorrent chown 1000:1000 /downloads/movies /downloads/tvshows
 }
 
 post_install_instructions() {
@@ -144,6 +143,49 @@ post_install_instructions() {
     echo "- Default credentials for qbittorrent can be found using the ${RED}docker logs qbittorrent${NC} command"
     echo "- Change default password immediately"
     echo "- If using VPN, ensure your VPN credentials are correct"
+
+    read -p "Do you want a detailed configuration guide? (y/n): " show_guide
+    
+    if [[ $show_guide == "y" ]]; then
+        display_configuration_guide
+    fi
+}
+
+display_configuration_guide() {
+    echo -e "\n${GREEN}=== Detailed Configuration Guide ===${NC}"
+    echo -e "\n${YELLOW}## Configure qBittorrent${NC}"
+    echo "- Open qBitTorrent at http://localhost:5080. Default username is 'admin'."
+    echo "- Temporary password can be collected from container log: ${RED}docker logs qbittorrent${NC}"
+    echo "- Go to Tools --> Options --> WebUI --> Change password"
+
+    echo -e "\n${YELLOW}## Configure Radarr${NC}"
+    echo "- Open Radarr at http://localhost:7878"
+    echo "- Settings --> Media Management --> Check 'Movies deleted from disk are automatically unmonitored in Radarr'"
+    echo "- Add Root Folder: /downloads/movies"
+    echo "- Configure Download Client: Add qBittorrent (host: qbittorrent, port: 5080)"
+    echo "- ${RED}Note:${NC} If using VPN, use 'vpn' as host instead"
+
+    echo -e "\n${YELLOW}## Configure Sonarr${NC}"
+    echo "- Similar configuration to Radarr, but for TV shows"
+    echo "- Root Folder: /downloads/tvshows"
+
+    echo -e "\n${YELLOW}## Configure Jellyfin${NC}"
+    echo "- Open Jellyfin at http://localhost:8096"
+    echo "- Follow the initial setup wizard"
+    echo "- Add media library folder: /data/movies/"
+
+    echo -e "\n${YELLOW}## Configure Jellyseerr${NC}"
+    echo "- Open Jellyseerr at http://localhost:5055"
+    echo "- Follow the initial setup wizard"
+    echo "- Provide Sonarr and Radarr details"
+    echo "- Detailed setup: https://docs.overseerr.dev/"
+
+    echo -e "\n${YELLOW}## Configure Prowlarr${NC}"
+    echo "- Open Prowlarr at http://localhost:9696"
+    echo "- Set up Authentication"
+    echo "- Add Indexers"
+    echo "- Add Radarr and Sonarr as applications"
+    echo -e "${RED}Note:${NC} With VPN, use static IPs or modified service names"
 }
 
 main() {
