@@ -191,6 +191,23 @@ services:
       - 7359:7359/udp
       - 8920:8920
     restart: unless-stopped
+
+  bazarr:
+    profiles: ["vpn", "no-vpn"]
+    container_name: bazarr
+    image: linuxserver/bazarr:1.4.2
+    networks:
+      - mynetwork
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    volumes:
+      - bazarr-config:/config
+      - torrent-downloads:/downloads
+    ports:
+      - 6767:6767
+    restart: unless-stopped
   
   # Doc: https://github.com/navilg/cleanmyarr
   # cleanmyarr:
@@ -231,6 +248,7 @@ volumes:
   jellyfin-config:
   qbittorrent-config:
   jellyseerr-config:
+  bazarr-config:
   # cleanmyarr-config:
 
 networks:
