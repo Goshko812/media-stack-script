@@ -68,6 +68,7 @@ After installation, access services at these default ports:
 - Prowlarr: `http://localhost:9696`
 - Jellyfin: `http://localhost:8096`
 - Jellyseerr: `http://localhost:5055`
+- Bazarr: `http://localhost:6767`
 - Or at your public IP + port
 
 ## ⚠️ Important Notes
