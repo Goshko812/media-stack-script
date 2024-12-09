@@ -154,6 +154,35 @@ location / {
         proxy_set_header X-Forwarded-Ssl on;
     }
 ```
+
+## Bazarr Nginx proxy
+```
+location /bazarr/ {
+   proxy_pass              http://127.0.0.1:6767/bazarr/;
+   proxy_set_header        X-Real-IP               $remote_addr;
+   proxy_set_header        Host                    $http_host;
+   proxy_set_header        X-Forwarded-For         $proxy_add_x_forwarded_for;
+   proxy_set_header        X-Forwarded-Proto       $scheme;
+   proxy_http_version      1.1;
+   proxy_set_header        Upgrade                 $http_upgrade;
+   proxy_set_header        Connection              "Upgrade";
+   proxy_redirect off;
+   # Allow the Bazarr API through if you enable Auth on the block above
+   location /bazarr/api {
+       auth_request off;
+       proxy_pass http://127.0.0.1:6767/bazarr/api;
+   }
+}
+```
+**Optionally** 
+```
+server {
+   # other code here
+
+   # Increase http2 max sizes
+   large_client_header_buffers 4 16k;
+}
+```
 ## Apply SSL in Nginx
 
 - Open port 80 and 443.
