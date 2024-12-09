@@ -186,6 +186,13 @@ display_configuration_guide() {
     echo "- Add Indexers"
     echo "- Add Radarr and Sonarr as applications"
     echo -e "${RED}Note:${NC} With VPN, use static IPs or modified service names"
+
+    echo -e "\n${YELLOW}## Configure Bazarr${NC}"
+    echo "- Open Prowlarr at http://localhost:6767"
+    echo "- Set up Authentication"
+    echo "- Add Providers"
+    echo "- Add default languages"
+    echo "- Add Radarr and Sonarr"
 }
 
 main() {
