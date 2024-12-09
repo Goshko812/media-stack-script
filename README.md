@@ -20,6 +20,7 @@ This bash script provides an automated installation and setup for a comprehensiv
 - **Prowlarr**: Indexer management
 - **Jellyfin**: Media server and streaming platform
 - **Jellyseerr**: Media recommendation and request system
+- **Bazarr**: Subtitle management and request system
 
 ## 🛠️ Prerequisites
 
