@@ -1,0 +1,144 @@
+server {
+    server_name example.com;  # Replace with your domain or server IP
+
+    # Global proxy settings
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Bazarr Configuration
+    location ^~ /bazarr/ {
+        proxy_pass              http://127.0.0.1:6767/bazarr/;
+        proxy_set_header        X-Real-IP               $remote_addr;
+        proxy_set_header        Host                    $http_host;
+        proxy_set_header        X-Forwarded-For         $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto       $scheme;
+        proxy_http_version      1.1;
+        proxy_set_header        Upgrade                 $http_upgrade;
+        proxy_set_header        Connection              "Upgrade";
+        proxy_redirect off;
+
+    # Allow the Bazarr API through if you enable Auth on the block above
+    location ^~ /bazarr/api {
+        auth_request off;
+        proxy_pass http://127.0.0.1:6767/bazarr/api;
+   }
+}
+    # Radarr Configuration
+    location ^~ /radarr {
+        proxy_pass http://127.0.0.1:7878;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+    }
+    # Allow the API External Access via NGINX
+    location ^~ /radarr/api {
+        auth_basic off;
+        proxy_pass http://127.0.0.1:7878;
+    }
+    # Sonarr Configuration
+    location ^~ /sonarr {
+        proxy_pass http://127.0.0.1:8989;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+    }
+    # Allow the API External Access via NGINX
+    location ^~ /sonarr/api {
+        auth_basic off;
+        proxy_pass http://127.0.0.1:8989;
+    }
+
+    # Prowlarr Configuration
+    location ^~ /prowlarr {
+        proxy_pass http://127.0.0.1:9696;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+    }
+    # Allow the API/Indexer External Access via NGINX
+    location ^~ /prowlarr(/[0-9]+)?/api {
+        auth_basic off;
+        proxy_pass http://127.0.0.1:9696;
+    }
+    # Jellyfin Configuration
+    location ^~ /jellyfin {
+        return 302 $scheme://$host/jellyfin/;
+    }
+
+    location ^~ /jellyfin/ {
+        proxy_pass http://127.0.0.1:8096/jellyfin/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_buffering off;
+    }
+
+    # qBittorrent Configuration
+    location ^~ /qbt/ {
+    proxy_pass         http://127.0.0.1:5080/; # Comment this line if VPN is enabled.
+    # proxy_pass         http://vpn:5080/; # Uncomment this line if VPN is enabled.
+    proxy_http_version 1.1;
+
+    proxy_set_header   Host               http://qbittorrent:5080; # Comment this line if VPN is enabled.
+    # proxy_set_header   Host               http://vpn:5080; # Uncomment this line if VPN is enabled.
+    proxy_set_header   X-Forwarded-Host   $http_host;
+    proxy_set_header   X-Forwarded-For    $remote_addr;
+    proxy_cookie_path  /                  "/; Secure";
+   }
+
+    # Jellyseerr Configuration
+    location ^~ / {
+        proxy_pass http://127.0.0.1:5055;
+        proxy_set_header Referer $http_referer;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Real-Port $remote_port;
+        proxy_set_header X-Forwarded-Host $host:$remote_port;
+        proxy_set_header X-Forwarded-Server $host;
+        proxy_set_header X-Forwarded-Port $remote_port;
+        proxy_set_header X-Forwarded-Ssl on;
+    }
+
+    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+
+server {
+    if ($host = example.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    listen [::]:80;
+    server_name example.com;
+    return 404; # managed by Certbot
+
+
+}
