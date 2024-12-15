@@ -11,14 +11,21 @@ server {
     server_name yourdomain.com;  # Replace with your domain or server IP
 
     # Radarr Configuration
-    location /radarr {
+    location ^~ /radarr {
         proxy_pass http://127.0.0.1:7878;
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $http_connection;
+    }
+    # Allow the API External Access via NGINX
+    location ^~ /radarr/api {
+        auth_basic off;
+        proxy_pass http://127.0.0.1:7878;
     }
 
     # [Rest of the location blocks from following examples go here]
@@ -31,15 +38,22 @@ server {
 - Add below proxy in nginx configuration
 
 ```
-location /radarr {
-    proxy_pass http://radarr:7878;
+location ^~ /radarr {
+    proxy_pass http://127.0.0.1:7878;
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_redirect off;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $http_connection;
-  }
+}
+# Allow the API External Access via NGINX
+location ^~ /radarr/api {
+    auth_basic off;
+    proxy_pass http://127.0.0.1:7878;
+}
 ```
 
 - Restart containers.
@@ -50,15 +64,22 @@ location /radarr {
 - Add below proxy in nginx configuration
 
 ```
-location /sonarr {
-    proxy_pass http://sonarr:8989;
+location ^~ /sonarr {
+    proxy_pass http://127.0.0.1:8989;
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_redirect off;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $http_connection;
-  }
+}
+# Allow the API External Access via NGINX
+location ^~ /sonarr/api {
+    auth_basic off;
+    proxy_pass http://127.0.0.1:8989;
+}
 ```
 
 ## Prowlarr Nginx reverse proxy
@@ -69,16 +90,22 @@ location /sonarr {
 This may need to change configurations in indexers and base in URL.
 
 ```
-location /prowlarr {
-    proxy_pass http://prowlarr:9696; # Comment this line if VPN is enabled.
-    # proxy_pass http://vpn:9696; # Uncomment this line if VPN is enabled.
+location ^~ /prowlarr {
+    proxy_pass http://127.0.0.1:9696;
     proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_redirect off;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $http_connection;
-  }
+}
+# Allow the API/Indexer External Access via NGINX
+location ^~ /prowlarr(/[0-9]+)?/api {
+    auth_basic off;
+    proxy_pass http://127.0.0.1:9696;
+}
 ```
 
 - Restart containers.
@@ -88,7 +115,7 @@ location /prowlarr {
 ## qBittorrent Nginx proxy
 
 ```
-location /qbt/ {
+location ^~ /qbt/ {
     proxy_pass         http://qbittorrent:5080/; # Comment this line if VPN is enabled.
     # proxy_pass         http://vpn:5080/; # Uncomment this line if VPN is enabled.
     proxy_http_version 1.1;
@@ -109,11 +136,11 @@ location /qbt/ {
 - Add below config in Ngix config
 
 ```
- location /jellyfin {
+ location ^~ /jellyfin {
         return 302 $scheme://$host/jellyfin/;
     }
 
-    location /jellyfin/ {
+    location ^~ /jellyfin/ {
 
         proxy_pass http://jellyfin:8096/jellyfin/;
 
@@ -139,7 +166,7 @@ location /qbt/ {
 **Currently Jellyseerr/Overseerr doesnot officially support the subfolder/path reverse proxy. They have a workaround documented here without an official support. Find it [here](https://docs.overseerr.dev/extending-overseerr/reverse-proxy)**
 
 ```
-location / {
+location ^~ / {
         proxy_pass http://127.0.0.1:5055;
 
         proxy_set_header Referer $http_referer;
@@ -157,7 +184,7 @@ location / {
 
 ## Bazarr Nginx proxy
 ```
-location /bazarr/ {
+location ^~ /bazarr/ {
    proxy_pass              http://127.0.0.1:6767/bazarr/;
    proxy_set_header        X-Real-IP               $remote_addr;
    proxy_set_header        Host                    $http_host;
@@ -168,7 +195,7 @@ location /bazarr/ {
    proxy_set_header        Connection              "Upgrade";
    proxy_redirect off;
    # Allow the Bazarr API through if you enable Auth on the block above
-   location /bazarr/api {
+   location ^~ /bazarr/api {
        auth_request off;
        proxy_pass http://127.0.0.1:6767/bazarr/api;
    }
