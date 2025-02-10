@@ -24,7 +24,7 @@ This bash script provides an automated installation and setup for a comprehensiv
 
 ## 🛠️ Prerequisites
 
-- Ubuntu 22.04 LTS
+- Ubuntu 22.04 LTS or 24.04 LTS
 - Sudo/root access
 - Stable internet connection
 
