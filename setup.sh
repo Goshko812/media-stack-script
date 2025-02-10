@@ -61,7 +61,7 @@ create_media_stack() {
     cd /opt/media-stack
 
     # Download docker-compose.yml
-    wget https://raw.githubusercontent.com/Goshko812/media-stack-script/refs/heads/main/docker-compose-backup.yml || {
+    wget https://raw.githubusercontent.com/Goshko812/media-stack-script/refs/heads/main/docker-compose.yml || {
         echo -e "${RED}Failed to download docker-compose.yml${NC}"
         exit 1
     }
