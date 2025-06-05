@@ -65,59 +65,15 @@ create_media_stack() {
         echo -e "${RED}Failed to download docker-compose.yml${NC}"
         exit 1
     }
-
-}
-
-# Configure VPN (optional)(haven't tried yet so yeah this will probably get removed or some shit later)
-configure_vpn() {
-    echo -e "${YELLOW}VPN Configuration${NC}"
-    
-    read -p "Do you want to use a VPN? (y/n): " use_vpn
-    
-    if [[ $use_vpn == "y" ]]; then
-        echo -e "${YELLOW}Available VPN Providers:${NC}"
-        echo "1. NordVPN"
-        echo "2. ExpressVPN"
-        echo "3. SurfShark"
-        echo "4. ProtonVPN"
-        echo "5. Custom OpenVPN"
-        
-        read -p "Choose VPN Provider (1-5): " vpn_choice
-        
-        read -p "Enter VPN Username: " vpn_username
-        read -sp "Enter VPN Password: " vpn_password
-        echo
-        
-        read -p "Enter Server Country (e.g., Switzerland): " server_country
-
-        # Export VPN variables
-        export VPN_SERVICE_PROVIDER=$(case $vpn_choice in
-            1) echo "nordvpn" ;;
-            2) echo "expressvpn" ;;
-            3) echo "surfshark" ;;
-            4) echo "protonvpn" ;;
-            5) read -p "Enter custom VPN provider name: " custom_vpn; echo "$custom_vpn" ;;
-            *) echo "nordvpn" ;;
-        esac)
-        export OPENVPN_USER="$vpn_username"
-        export OPENVPN_PASSWORD="$vpn_password"
-        export SERVER_COUNTRIES="$server_country"
-    fi
 }
 
 deploy_media_stack() {
     echo -e "${YELLOW}Deploying Media Stack...${NC}"
     
-    docker network create --subnet 172.20.0.0/16 mynetwork || true
+    docker network create --subnet 172.20.0.0/16 media-network || true
 
-    # Deploy with or without VPN
-    if [ -n "$VPN_SERVICE_PROVIDER" ]; then
-        echo -e "${GREEN}Deploying with VPN: $VPN_SERVICE_PROVIDER${NC}"
-        docker compose --profile vpn up -d
-    else
-        echo -e "${GREEN}Deploying without VPN${NC}"
-        docker compose --profile no-vpn up -d
-    fi
+    echo -e "${GREEN}Deploying Media Stack${NC}"
+    docker compose up -d
 
     docker exec qbittorrent mkdir -p /downloads/movies /downloads/tvshows
     docker exec qbittorrent chown 1000:1000 /downloads/movies /downloads/tvshows
@@ -142,7 +98,6 @@ post_install_instructions() {
     echo -e "\n${RED}IMPORTANT:${NC}"
     echo "- Default credentials for qbittorrent can be found using the ${RED}docker logs qbittorrent${NC} command"
     echo "- Change default password immediately"
-    echo "- If using VPN, ensure your VPN credentials are correct"
 
     read -p "Do you want a detailed configuration guide? (y/n): " show_guide
     
@@ -163,7 +118,6 @@ display_configuration_guide() {
     echo "- Settings --> Media Management --> Check 'Movies deleted from disk are automatically unmonitored in Radarr'"
     echo "- Add Root Folder: /downloads/movies"
     echo "- Configure Download Client: Add qBittorrent (host: qbittorrent, port: 5080)"
-    echo "- ${RED}Note:${NC} If using VPN, use 'vpn' as host instead"
 
     echo -e "\n${YELLOW}## Configure Sonarr${NC}"
     echo "- Similar configuration to Radarr, but for TV shows"
@@ -185,10 +139,9 @@ display_configuration_guide() {
     echo "- Set up Authentication"
     echo "- Add Indexers"
     echo "- Add Radarr and Sonarr as applications"
-    echo -e "${RED}Note:${NC} With VPN, use static IPs or modified service names"
 
     echo -e "\n${YELLOW}## Configure Bazarr${NC}"
-    echo "- Open Prowlarr at http://localhost:6767"
+    echo "- Open Bazarr at http://localhost:6767"
     echo "- Set up Authentication"
     echo "- Add Providers"
     echo "- Add default languages"
@@ -202,8 +155,6 @@ main() {
     prepare_system
     
     create_media_stack
-    
-    configure_vpn
     
     deploy_media_stack
     

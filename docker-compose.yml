@@ -1,79 +1,13 @@
 version: "3.9"
 name: media-stack
+
 services:
-
-  # To use/enable VPN, Run this compose file with --profile=vpn. Its highly recommended to use VPN.
-  vpn:
-    ## Read https://github.com/qdm12/gluetun-wiki/tree/main/setup/providers for details on configuring VPN for your service provider.
-    profiles: ["vpn"]
-    container_name: vpn
-    image: qmcgaw/gluetun:v3.40.0
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:-nordvpn} # Valid values: nordvpn, expressvpn, protonvpn, surfshark or custom
-      - OPENVPN_USER=${OPENVPN_USER:-""}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD:-""}
-
-      ## For list of server countries, visit https://raw.githubusercontent.com/qdm12/gluetun/master/internal/storage/servers.json
-      ## When VPN_SERVICE_PROVIDER is custom. Comment the below line
-      - SERVER_COUNTRIES=${SERVER_COUNTRIES:-Switzerland}
-    
-      # - FREE_ONLY=on  # Valid with protonvpn only. Value willbe set "on" if using free subscription provided by protonvpn
-
-      ## Enable below if VPN_SERVICE_PROVIDER=custom
-      # - VPN_TYPE=openvpn # or wireguard. 
-
-      ## If VPN_TYPE is openvpn
-      # - OPENVPN_CUSTOM_CONFIG=/gluetun/custom.conf
-
-      ## If VPN_TYPE is wireguard. Replace below env variables as required.
-      # - VPN_ENDPOINT_IP=1.2.3.4                                               # Replace with your wg endpoint ip or domain
-      # - VPN_ENDPOINT_PORT=51820                                               # Replace with wg server port
-      # - WIREGUARD_PUBLIC_KEY=wAUaJMhAq3NFutLHIdF8AN0B5WG8RndfQKLPTEDHal0=     # Replace with your wg public key
-      # - WIREGUARD_PRIVATE_KEY=wOEI9rqqbDwnN8/Bpp22sVz48T71vJ4fYmFWujulwUU=    # Replace with your wg client private key
-      # - WIREGUARD_PRESHARED_KEY=xOEI9rqqbDwnN8/Bpp22sVz48T71vJ4fYmFWujulwUU=  # Replaced with your wg pre-shared key
-      # - WIREGUARD_ADDRESSES="10.64.222.21/32"                                 # Replace with wg address
-
-    ## Enable volume if VPN_SERVICE_PROVIDER=custom and VPN_TYPE=openvpn is used
-    # volumes:
-      # - /yourpath/yourconfig.conf:/gluetun/config.conf:ro
-
-    networks:
-      - mynetwork
-
-    devices:
-      - /dev/net/tun:/dev/net/tun
-      
-    # Uncomment/enable below ports if VPN is used/enabled
-    # ports:
-    #   # qbittorrent ports
-    #   - 5080:5080
-    #   - 6881:6881
-    #   - 6881:6881/udp
-    #   # prowlarr ports
-    #   - 9696:9696
-    restart: "unless-stopped"
-
-  ## Default credentials of qBittorrent - Username: admin password: adminadmin ##
-  ## Change password after install from UI --> Tools --> Options --> WebUI ##
+  ## qBittorrent ##
   qbittorrent:
-    profiles: ["vpn", "no-vpn"]
     container_name: qbittorrent
     image: lscr.io/linuxserver/qbittorrent:5.0.3
-
-    # Unomment below if vpn is enabled
-    # depends_on:               # Uncomment this line if vpn is enabled
-      # vpn:                   # Uncomment this line if vpn is enabled
-      #   condition: service_healthy # Uncomment this line if vpn is enabled
-
-    # Comment below lines if VPN is enabled
-    networks:               # Comment this line if vpn is enabled
-      - mynetwork           # Comment this line if vpn is enabled
-
-    # Unomment below line if vpn is enabled
-    # network_mode: service:vpn
-
+    networks:
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -82,23 +16,18 @@ services:
     volumes:
       - qbittorrent-config:/config
       - torrent-downloads:/downloads
-
-    ## Comment/Disable below ports if VPN is enabled
     ports:
       - 5080:5080
       - 6881:6881
       - 6881:6881/udp
     restart: "unless-stopped"
 
+  ## Radarr ##
   radarr:
-    profiles: ["vpn", "no-vpn"]
     container_name: radarr
     image: lscr.io/linuxserver/radarr:5.18.4
     networks:
-      - mynetwork   # Comment this line if VPN is enabled
-    ## Uncomment below lines if VPN is enabled
-    #   mynetwork:
-    #     ipv4_address: ${RADARR_STATIC_CONTAINER_IP} # It should be available IPv4 address in range of docker network `mynetwork` e.g. 172.20.0.2
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -110,15 +39,12 @@ services:
       - torrent-downloads:/downloads
     restart: "unless-stopped"
 
+  ## Sonarr ##
   sonarr:
-    profiles: ["vpn", "no-vpn"]
-    image: linuxserver/sonarr:4.0.12
     container_name: sonarr
+    image: linuxserver/sonarr:4.0.12
     networks:
-      - mynetwork   # Comment this line if VPN is enabled
-    ## Uncomment below lines if VPN is enabled
-    #   mynetwork:
-    #     ipv4_address: ${SONARR_STATIC_CONTAINER_IP} # It should be available IPv4 address in range of docker network `mynetwork` e.g. 172.20.0.2
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -130,37 +56,28 @@ services:
       - 8989:8989
     restart: unless-stopped
 
+  ## Prowlarr ##
   prowlarr:
-    profiles: ["vpn", "no-vpn"]
     container_name: prowlarr
     image: linuxserver/prowlarr:1.30.2
-
-    # Uncomment below if vpn is enabled
-    # depends_on:               # Uncomment this line if vpn is enabled
-      # vpn:                   # Uncomment this line if vpn is enabled
-      #   condition: service_healthy # Uncomment this line if vpn is enabled
-    # network_mode: service:vpn # Uncomment this line if vpn is enabled
-
-    networks:               # Comment this line if vpn is enabled
-      - mynetwork           # Comment this line if vpn is enabled
+    networks:
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=UTC
     volumes:
       - prowlarr-config:/config
-
-    # Comment below ports if VPN is enabled.
     ports:
       - 9696:9696
     restart: unless-stopped
 
+  ## Jellyseerr ##
   jellyseerr:
-    profiles: ["vpn", "no-vpn"]
-    image: fallenbagel/jellyseerr:2.3.0
     container_name: jellyseerr
+    image: fallenbagel/jellyseerr:2.3.0
     networks:
-      - mynetwork
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -171,12 +88,12 @@ services:
       - 5055:5055
     restart: unless-stopped
 
+  ## Jellyfin ##
   jellyfin:
-    profiles: ["vpn", "no-vpn"]
-    image: linuxserver/jellyfin:10.10.3
     container_name: jellyfin
+    image: linuxserver/jellyfin:10.10.3
     networks:
-      - mynetwork
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -184,20 +101,18 @@ services:
     volumes:
       - jellyfin-config:/config
       - torrent-downloads:/data
-  # devices:
-   #  - /dev/videoN:/dev/videoN # Mount GPU device 
     ports:
       - 8096:8096
       - 7359:7359/udp
       - 8920:8920
     restart: unless-stopped
 
+  ## Bazarr ##
   bazarr:
-    profiles: ["vpn", "no-vpn"]
     container_name: bazarr
     image: linuxserver/bazarr:1.4.2
     networks:
-      - mynetwork
+      - media-network
     environment:
       - PUID=1000
       - PGID=1000
@@ -208,37 +123,6 @@ services:
     ports:
       - 6767:6767
     restart: unless-stopped
-  
-  # Doc: https://github.com/navilg/cleanmyarr
-  # cleanmyarr:
-  #   profiles: ["vpn", "no-vpn"]
-  #   depends_on:
-  #     - radarr
-  #     - sonarr
-  #   image: linuxshots/cleanmyarr:0.8.1
-  #   container_name: cleanmyarr
-  #   networks:
-  #     - mynetwork
-  #   volumes:
-  #     - cleanmyarr-config:/config
-    # restart: unless-stopped
-    # environment:
-    # - CMA_MAINTENANCE_CYCLE=${CMA_MAINTENANCE_CYCLE:-""}
-    # - CMA_DELETE_AFTER_DAYS=${CMA_DELETE_AFTER_DAYS:-""}
-    # - CMA_ENABLE_EMAIL_NOTIFICATION=${CMA_ENABLE_EMAIL_NOTIFICATION:-""}
-    # - CMA_SMTP_USERNAME=${CMA_SMTP_USERNAME:-""}
-    # - CMA_SMTP_ENCODED_PASSWORD=${CMA_SMTP_ENCODED_PASSWORD:-""}
-    # - CMA_SMTP_TO_EMAILS=${CMA_SMTP_TO_EMAILS:-""}
-    # - CMA_ENABLE_GOTIFY_NOTIFICATION=${CMA_ENABLE_GOTIFY_NOTIFICATION:-""}
-    # - CMA_GOTIFY_URL=${CMA_GOTIFY_URL:-""}
-    # - CMA_GOTIFY_ENCODED_APP_TOKEN=${CMA_GOTIFY_ENCODED_APP_TOKEN:-""}
-    # - CMA_ENABLE_TELEGRAM_NOTIFICATION=${CMA_ENABLE_TELEGRAM_NOTIFICATION:-""}
-    # - CMA_TELEGRAM_ENCODED_BOT_TOKEN=${CMA_TELEGRAM_ENCODED_BOT_TOKEN:-""}
-    # - CMA_TELEGRAM_CHAT_ID=${CMA_TELEGRAM_CHAT_ID:-""}
-    # - CMA_MONITOR_RADARR=${CMA_MONITOR_RADARR:-""}
-    # - CMA_RADARR_URL=${CMA_RADARR_URL:-""}
-    # - CMA_RADARR_ENCODED_API_KEY=${CMA_RADARR_ENCODED_API_KEY:-""}
-    # - CMA_RADARR_ENABLE_NOTIFICATION=${CMA_RADARR_ENABLE_NOTIFICATION:-""}
 
 volumes:
   torrent-downloads:
@@ -249,8 +133,7 @@ volumes:
   qbittorrent-config:
   jellyseerr-config:
   bazarr-config:
-  # cleanmyarr-config:
 
 networks:
-  mynetwork:
+  media-network:
     external: true
