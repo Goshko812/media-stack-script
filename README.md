@@ -1,5 +1,9 @@
 # Media Stack Automated Installer
 
+![trash code](https://img.shields.io/badge/code-trash%20🗑️-red)
+![works](https://img.shields.io/badge/works-on%20my%20machine-brightgreen)
+![bash magic](https://img.shields.io/badge/powered%20by-bash%20and%20hope-yellow)
+
 ## Overview
 
 This bash script provides an automated installation and setup for a comprehensive media management and streaming stack on Ubuntu 22.04 LTS. The script simplifies the process of setting up a home media server with various tools for downloading, managing, and streaming movies and TV shows.
